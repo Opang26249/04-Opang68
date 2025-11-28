@@ -6,9 +6,11 @@ Personalized Learning Plan
 
 เป้าหมาย
 
+
 เขียนโค้ด ลองโปรแกรม แบบ step by step
 
 
 ปัญหาที่สนใจ
+
 
 การใช้ภาษาโค้ดในการเขียนใน github
