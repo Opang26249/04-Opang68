@@ -18,6 +18,8 @@
 
 📸 4. ตัวอย่างการใช้งาน (Screenshots)
 (ให้นักเรียนใส่รูปภาพหน้าจอโปรแกรมที่ออกแบบไว้ในขั้น UI Mockup หรือตอนเสร็จแล้ว)
+
+
 <img width="397" height="747" alt="image" src="https://github.com/user-attachments/assets/d2148d28-fe73-4475-9918-a7c8ac4b16ea" />
 
 
