@@ -23,6 +23,7 @@
 <img width="397" height="747" alt="image" src="https://github.com/user-attachments/assets/d2148d28-fe73-4475-9918-a7c8ac4b16ea" />
 
 
+
 💻 5. วิธีการใช้งาน (How to run)
  1. ดาวน์โหลดไฟล์ .py
  2. เปิดโปรแกรม IDLE python
