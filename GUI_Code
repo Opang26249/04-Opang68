@@ -1,0 +1,146 @@
+import tkinter as tk
+from tkinter import messagebox
+from datetime import date
+
+# ---------------------------------------------------------
+# Coding By GEMINI | Idea By Thanaphat Pubkhuntod
+# ---------------------------------------------------------
+
+data = {
+    "initial_limit": 0.0,
+    "total_spent": 0.0,
+    "last_set_date": None,
+    "is_dark_mode": False,
+    "is_warned_40": False 
+}
+
+colors = {
+    "light": {"bg": "#ffffff", "fg": "#2d3436", "header": "#6c5ce7", "frame": "#f9f9f9", "entry_bg": "#ffffff", "btn_reset": "#fab1a0"},
+    "dark": {"bg": "#1e272e", "fg": "#dfe6e9", "header": "#341f97", "frame": "#2f3542", "entry_bg": "#57606f", "btn_reset": "#e17055"}
+}
+
+def toggle_theme():
+    data["is_dark_mode"] = not data["is_dark_mode"]
+    theme = colors["dark"] if data["is_dark_mode"] else colors["light"]
+    root.configure(bg=theme["bg"])
+    header.configure(bg=theme["header"])
+    title_label.configure(bg=theme["header"])
+    display_frame.configure(bg=theme["frame"])
+    credit_label.configure(bg=theme["bg"])
+    for widget in root.winfo_children():
+        if isinstance(widget, tk.Label) and widget != title_label and widget != credit_label:
+            widget.configure(bg=theme["bg"], fg=theme["fg"])
+    for widget in display_frame.winfo_children():
+        if isinstance(widget, tk.Label):
+            widget.configure(bg=theme["frame"], fg=theme["fg"] if "คงเหลือ" in widget.cget("text") or "ใช้ไป" in widget.cget("text") else widget.cget("fg"))
+    item_price_entry.configure(bg=theme["entry_bg"], fg=theme["fg"], insertbackground=theme["fg"])
+    limit_entry.configure(bg=theme["entry_bg"], fg=theme["fg"], insertbackground=theme["fg"])
+    reset_btn.configure(bg=theme["btn_reset"])
+    theme_btn.configure(text="☀️ Light Mode" if data["is_dark_mode"] else "🌙 Dark Mode")
+
+def reset_all_data():
+    confirm = messagebox.askyesno("ยืนยัน", "ต้องการรีเซ็ตข้อมูลทั้งหมดใช่หรือไม่?")
+    if confirm:
+        data["total_spent"] = 0.0
+        data["initial_limit"] = 0.0
+        data["is_warned_40"] = False
+        limit_entry.config(state='normal')
+        limit_entry.delete(0, tk.END)
+        item_price_var.set("")
+        update_calculations()
+
+def update_calculations(*args):
+    try:
+        current_input = item_price_var.get().replace(',', '')
+        current_item_price = float(current_input) if current_input else 0.0
+        projected_spent = data["total_spent"] + current_item_price
+        remaining = data["initial_limit"] - projected_spent
+        
+        spent_text = f"{projected_spent:,.2f}"
+        remaining_text = f"{remaining:,.2f}"
+        spent_today_var.set(spent_text)
+        remaining_var.set(remaining_text)
+
+        # ปรับขนาด Font อัตโนมัติไม่ให้ล้นกรอบ
+        if len(spent_text) > 12: spent_label_display.config(font=("Consolas", 12, "bold"))
+        else: spent_label_display.config(font=("Consolas", 16, "bold"))
+
+        if len(remaining_text) > 12: remaining_label_display.config(font=("Consolas", 14, "bold"))
+        elif len(remaining_text) > 9: remaining_label_display.config(font=("Consolas", 18, "bold"))
+        else: remaining_label_display.config(font=("Consolas", 24, "bold"))
+        
+        if remaining < 0: remaining_label_display.config(fg="#ff7675")
+        else: remaining_label_display.config(fg="#55efc4" if data["is_dark_mode"] else "#27ae60")
+    except ValueError: pass
+
+def add_expense(event=None):
+    try:
+        if data["initial_limit"] == 0:
+            val = limit_entry.get().replace(',', '')
+            if not val or float(val) <= 0: return
+            data["initial_limit"] = float(val)
+            limit_entry.config(state='disabled')
+        
+        price_in = item_price_var.get().replace(',', '')
+        if not price_in or float(price_in) == 0: return 
+        data["total_spent"] += float(price_in)
+        
+        rem = data["initial_limit"] - data["total_spent"]
+        if rem <= (data["initial_limit"] * 0.4) and not data["is_warned_40"] and rem > 0:
+            messagebox.showwarning("เตือน", "ยอดเงินเหลือน้อยเกินไปแล้ว!!!")
+            data["is_warned_40"] = True
+        if data["total_spent"] > data["initial_limit"]:
+            messagebox.showwarning("Over Budget!", "ใช้เงินเกินงบแล้ว!")
+
+        item_price_var.set("")
+        update_calculations()
+        item_price_entry.focus_set()
+    except ValueError: pass
+
+root = tk.Tk()
+root.title("Budget Tracker Pro")
+root.geometry("400x720")
+root.configure(bg="#ffffff")
+
+header = tk.Frame(root, bg="#6c5ce7", height=80)
+header.pack(fill="x")
+title_label = tk.Label(header, text="My Budget Control", font=("Helvetica", 16, "bold"), fg="white", bg="#6c5ce7")
+title_label.pack(side="left", padx=20, pady=20)
+theme_btn = tk.Button(header, text="🌙 Dark Mode", command=toggle_theme, font=("Tahoma", 8), bg="#341f97", fg="white", relief="flat")
+theme_btn.pack(side="right", padx=10)
+
+tk.Label(root, text="งบประมาณตั้งต้น (Limit)", bg="#ffffff").pack(pady=(20,0))
+limit_entry = tk.Entry(root, font=("Consolas", 14), justify='center')
+limit_entry.pack(pady=5)
+
+tk.Label(root, text="ราคาสินค้าที่จ่ายไป (กด Enter)", bg="#ffffff", font=("Tahoma", 10, "bold")).pack(pady=(15,0))
+item_price_var = tk.StringVar()
+item_price_var.trace_add("write", update_calculations)
+item_price_entry = tk.Entry(root, textvariable=item_price_var, font=("Consolas", 22), justify='center', bd=2)
+item_price_entry.pack(pady=5, ipady=8, padx=50)
+item_price_entry.focus_set()
+root.bind('<Return>', add_expense)
+
+display_frame = tk.Frame(root, bg="#f9f9f9", padx=20, pady=20, bd=1, relief="groove")
+display_frame.pack(pady=20, fill="x", padx=40)
+
+tk.Label(display_frame, text="ใช้ไปแล้ววันนี้:", bg="#f9f9f9").pack()
+spent_today_var = tk.StringVar(value="0.00")
+spent_label_display = tk.Label(display_frame, textvariable=spent_today_var, font=("Consolas", 16, "bold"), fg="#0984e3", bg="#f9f9f9")
+spent_label_display.pack()
+
+tk.Label(display_frame, text="วงเงินคงเหลือ:", bg="#f9f9f9").pack(pady=(10,0))
+remaining_var = tk.StringVar(value="0.00")
+remaining_label_display = tk.Label(display_frame, textvariable=remaining_var, font=("Consolas", 24, "bold"), fg="#27ae60", bg="#f9f9f9")
+remaining_label_display.pack()
+
+btn_frame = tk.Frame(root, bg="#ffffff")
+btn_frame.pack(pady=10)
+tk.Button(btn_frame, text="บันทึกรายจ่าย", command=add_expense, bg="#6c5ce7", fg="white", font=("Tahoma", 11, "bold"), width=12, height=2).pack(side="left", padx=5)
+reset_btn = tk.Button(btn_frame, text="Reset", command=reset_all_data, bg="#fab1a0", fg="#2d3436", font=("Tahoma", 11, "bold"), width=8, height=2)
+reset_btn.pack(side="left", padx=5)
+
+credit_label = tk.Label(root, text="Coding By GEMINI | Idea By Thanaphat Pubkhuntod", font=("Arial", 8, "italic"), fg="#b2bec3", bg="#ffffff")
+credit_label.pack(side="bottom", pady=10)
+
+root.mainloop()
